@@ -8,7 +8,7 @@
 #define PWM_PIN3        25        // GPIO pin for PWM channel 3
 
 #define PWM_FREQUENCY   1000      // PWM frequency in Hz
-#define PWM_TOP_VALUE   16000     // PWM period (16000 ticks @ 1 MHz)
+#define PWM_TOP_VALUE   --        // Find the corresponding TOP VALUE using the formula in slides
 
 // Define duty cycles (values from 0 to PWM_TOP_VALUE)
 uint16_t pwm_seq_values[] = {

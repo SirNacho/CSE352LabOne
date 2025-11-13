@@ -8399,6 +8399,11 @@
 //==========================================================
 #ifndef NRF_LOG_ENABLED
 #define NRF_LOG_ENABLED 0
+#define NRF_LOG_ENABLED 0
+#define NRF_LOG_BACKEND_UART_ENABLED 0
+#define NRF_LOG_BACKEND_RTT_ENABLED 0
+#define NRF_LOG_DEFAULT_BACKENDS_ENABLED 0
+
 #endif
 // <h> Log message pool - Configuration of log message pool
 
@@ -8451,7 +8456,8 @@
 // <16384=> 16384 
 
 #ifndef NRF_LOG_BUFSIZE
-#define NRF_LOG_BUFSIZE 1024
+// #define NRF_LOG_BUFSIZE 1024
+#define NRF_LOG_BUFSIZE 256
 #endif
 
 // <q> NRF_LOG_CLI_CMDS  - Enable CLI commands for the module.

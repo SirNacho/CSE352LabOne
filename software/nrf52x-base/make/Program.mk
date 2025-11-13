@@ -119,41 +119,92 @@ erase: $(BUILDDIR)
 
 .PHONY: gdb
 gdb:
+	@echo "Starting GDB server and debugging session..."
 ifeq ($(UNAME_S),Darwin)
-	$(Q)$(TERMINAL) "cd $(PWD) && $(JLINK_GDBSERVER) $(JLINK_FLAGS) $(JLINK_GDBSERVER_FLAGS)"'
+	@echo "Running on macOS..."
+	@echo "Launching JLink GDB Server with flags: $(JLINK_FLAGS) $(JLINK_GDBSERVER_FLAGS)"
+	$(Q)$(TERMINAL) "cd $(PWD) && $(JLINK_GDBSERVER) $(JLINK_FLAGS) $(JLINK_GDBSERVER_FLAGS)" &
+	@echo "Waiting for GDB server to initialize..."
 	$(Q)sleep 1
+	@echo "Creating .gdbinit file with initial GDB commands..."
 	$(Q)printf "target remote localhost:$(GDB_PORT_NUMBER)\nload\nmon reset\nbreak main\ncontinue\n" > .gdbinit
 ifneq ("$(wildcard $(DEBUG_ELF))","")
-	$(Q)$(TERMINAL) "cd $(PWD) && $(GDB) -x .gdbinit $(DEBUG_ELF)"'
+	@echo "Found DEBUG_ELF file: $(DEBUG_ELF). Launching GDB..."
+	$(Q)$(TERMINAL) "cd $(PWD) && $(GDB) -x .gdbinit $(DEBUG_ELF)" &
 else ifneq ("$(wildcard $(ELF))","")
-	$(Q)$(TERMINAL) "cd $(PWD) && $(GDB) -x .gdbinit $(ELF)"'
+	@echo "Found ELF file: $(ELF). Launching GDB..."
+	$(Q)$(TERMINAL) "cd $(PWD) && $(GDB) -x .gdbinit $(ELF)" &
 else
-	$(Q)$(TERMINAL) "cd $(PWD) && $(GDB) -x .gdbinit"'
+	@echo "No ELF files found. Launching GDB without ELF..."
+	$(Q)$(TERMINAL) "cd $(PWD) && $(GDB) -x .gdbinit" &
 endif
 else
-	$(Q)$(TERMINAL) -e "$(JLINK_GDBSERVER) $(JLINK_FLAGS) $(JLINK_GDBSERVER_FLAGS)"
+	@echo "Running on non-macOS system..."
+	@echo "Launching JLink GDB Server with flags: $(JLINK_FLAGS) $(JLINK_GDBSERVER_FLAGS)"
+	$(Q)$(TERMINAL) -e "$(JLINK_GDBSERVER) $(JLINK_FLAGS) $(JLINK_GDBSERVER_FLAGS)" &
+	@echo "Waiting for GDB server to initialize..."
 	$(Q)sleep 1
+	@echo "Creating .gdbinit file with initial GDB commands..."
 	$(Q)printf "target remote localhost:$(GDB_PORT_NUMBER)\nload\nmon reset\nbreak main\ncontinue\n" > .gdbinit
 ifneq ("$(wildcard $(DEBUG_ELF))","")
-	$(Q)$(TERMINAL) -e "$(GDB) -x .gdbinit $(DEBUG_ELF)"
+	@echo "Found DEBUG_ELF file: $(DEBUG_ELF). Launching GDB..."
+	$(Q)$(TERMINAL) -e "$(GDB) -x .gdbinit $(DEBUG_ELF)" &
 else ifneq ("$(wildcard $(ELF))","")
-	$(Q)$(TERMINAL) -e "$(GDB) -x .gdbinit $(ELF)"
+	@echo "Found ELF file: $(ELF). Launching GDB..."
+	$(Q)$(TERMINAL) -e "$(GDB) -x .gdbinit $(ELF)" &
 else
-	$(Q)$(TERMINAL) -e "$(GDB) -x .gdbinit"
+	@echo "No ELF files found. Launching GDB without ELF..."
+	$(Q)$(TERMINAL) -e "$(GDB) -x .gdbinit" &
 endif
 endif
+	@echo "GDB session started. Check for terminal output."
 
+# ###########################################################################
+## included an additional target for opening JLinkExe for SSH operations
+.PHONY: jlink
+jlink:
+	$(JLINK) $(JLINK_FLAGS) -AutoConnect 1 & sleep 1 & $(JLINK_RTTCLIENT)
+# ##########################################################################
+# .PHONY: rtt
+# rtt:
+# ifeq ($(UNAME_S),Darwin)
+# 	$(JLINK) $(JLINK_FLAGS) -AutoConnect 1 &
+# 	sleep 1
+# 	$(JLINK_RTTCLIENT)
+# else
+# ifdef DISPLAY
+# 	$(TERMINAL) -e "$(JLINK) $(JLINK_FLAGS) -AutoConnect 1" &
+# 	sleep 1
+# 	$(TERMINAL) -e "$(JLINK_RTTCLIENT)"
+# else
+# 	# No DISPLAY? Run in this terminal instead (SSH-safe)
+# 	# $(JLINK) $(JLINK_FLAGS) -AutoConnect 1 &
+# 	# sleep 1
+# 	$(JLINK_RTTCLIENT)
+# endif
+# endif
 .PHONY: rtt
 rtt:
+	@echo "Starting RTT session..."
 ifeq ($(UNAME_S),Darwin)
-	$(Q)$(TERMINAL) "$(JLINK) $(JLINK_FLAGS) -AutoConnect 1"'
+	@echo "Running on macOS..."
+	@echo "Launching JLink with flags: $(JLINK_FLAGS) and AutoConnect enabled..."
+	$(Q)$(TERMINAL) "$(JLINK) $(JLINK_FLAGS) -AutoConnect 1" &
+	@echo "Waiting for JLink to initialize..."
 	$(Q)sleep 1
-	$(Q)$(TERMINAL) "$(JLINK_RTTCLIENT)"'
+	@echo "Launching JLink RTT Client..."
+	$(Q)$(TERMINAL) "$(JLINK_RTTCLIENT)"
 else
-	$(Q)$(TERMINAL) -e "$(JLINK) $(JLINK_FLAGS) -AutoConnect 1"
+	@echo "Running on non-macOS system..."
+	@echo "Launching JLink with flags: $(JLINK_FLAGS) and AutoConnect enabled..."
+	$(Q)$(TERMINAL) -e "$(JLINK) $(JLINK_FLAGS) -AutoConnect 1" &
+	@echo "Waiting for JLink to initialize..."
 	$(Q)sleep 1
+	@echo "Launching JLink RTT Client..."
 	$(Q)$(TERMINAL) -e "$(JLINK_RTTCLIENT)"
 endif
+	@echo "RTT session started. Check the RTT client output for logs."
+
 
 # ---- nrfutil bootloader rules
 .PHONY: pkg

@@ -57,18 +57,18 @@ APP_TIMER_DEF(clock_timer);
 
 // Function starting the internal LFCLK oscillator (used for RTC1 required by app_timer)
 // (When SoftDevice is enabled the LFCLK is always running and this is not needed).
-/*static void lfclk_request(void)
+static void lfclk_request(void)
 {
 	uint32_t err_code = nrf_drv_clock_init();
 	APP_ERROR_CHECK(err_code);
 
 	nrf_drv_clock_lfclk_request(NULL);
-}*/
+}
 
 static void timer_init(void (*timeout_fct)(void*)) {
 
 	// Request LFCLK if no SoftDevice is used
-	//lfclk_request();
+	lfclk_request();
 
 	// Init application timer module
 	ret_code_t err_code = app_timer_init();
