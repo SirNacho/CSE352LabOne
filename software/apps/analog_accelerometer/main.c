@@ -63,6 +63,14 @@ int main (void) {
   error_code = nrfx_saadc_channel_init(X_CHANNEL, &channel_config);
   APP_ERROR_CHECK(error_code);
 
+  channel_config.pin_p = BUCKLER_ANALOG_ACCEL_Y;
+  error_code = nrfx_saadc_channel_init(Y_CHANNEL, &channel_config);
+  APP_ERROR_CHECK(error_code);
+
+  channel_config.pin_p = BUCKLER_ANALOG_ACCEL_Z;
+  error_code = nrfx_saadc_channel_init(Z_CHANNEL, &channel_config);
+  APP_ERROR_CHECK(error_code);
+
   // Use the code for configuring Accel_X channel to configure channels Accel_y and Accel_z
   // Go through buckler.h for relevant macros for the two channels
 
@@ -74,10 +82,20 @@ int main (void) {
   // loop forever
   while (1) {
     // 1. Figure out how to sample a value from ADC making use of sample_value function
-    
+    nrf_saadc_value_t x_value = sample_value(X_CHANNEL);
+    nrf_saadc_value_t y_value = sample_value(Y_CHANNEL);
+    nrf_saadc_value_t z_value = sample_value(Z_CHANNEL);
 
     // 2. print the values for x, y and z
-
+    //printf("x sample value: %d\n", x_value);
+    //printf("x voltage value: %f\n", (x_value * 0.00087890625));
+    printf("x acceleration value: %f\n", (((x_value * 0.00087890625) - 1.5) / 420) * 1000);
+    //printf("y sample value: %d\n", y_value);
+    //printf("y voltage value: %f\n", (y_value * 0.00087890625));
+    printf("y acceleration value: %f\n", (((y_value * 0.00087890625) - 1.5) / 420)* 1000);
+    //printf("z sample value: %d\n", z_value);
+    //printf("z voltage value: %f\n", (z_value * 0.00087890625));
+    printf("z acceleration value: %f\n", (((z_value * 0.00087890625) - 1.5) / 420) * 1000);
 
     // 3. Conver the ADC generated values to voltage and then the acceleration
     

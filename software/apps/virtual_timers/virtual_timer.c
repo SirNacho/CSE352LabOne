@@ -10,13 +10,17 @@
 #include "virtual_timer.h"
 #include "virtual_timer_linked_list.h"
 
+uint32_t PRESCALER = 4;
+
 // This is the interrupt handler that fires on a compare event
 void TIMER4_IRQHandler(void) {
+  __disable_irq();
   // This should always be the first line of the interrupt handler!
   // It clears the event so that it doesn't happen again
   NRF_TIMER4->EVENTS_COMPARE[0] = 0;
 
   // Place your interrupt handler code here
+
    
   // Update CC[0] register from the remaining timer values
   checkTimers();
@@ -53,6 +57,15 @@ uint32_t read_timer(void) {
 // 5) Start the timer
 void virtual_timer_init(void) {
   // Place your timer initialization code here
+
+  NRF_TIMER4->PRESCALER = PRESCALER;
+  NRF_TIMER4->BITMODE = 3;
+  NRF_TIMER4->MODE = 0;
+
+  NRF_TIMER4->TASKS_STOP = 0x01;
+  NRF_TIMER4->TASKS_CLEAR = 0x01;
+
+  NRF_TIMER4->TASKS_START = 0x01;
 }
 
 // Start a timer. This function is called for both one-shot and repeated timers
@@ -70,22 +83,23 @@ void virtual_timer_init(void) {
 //
 // Follow the lab manual and start with simple cases first, building complexity and
 // testing it over time.
-static uint32_t timer_start(uint32_t microseconds, virtual_timer_callback_t cb, bool repeated) {
 
   
-  return 0;
-}
+  //list_print(list_head);
+  //return 0;
 
 // You do not need to modify this function
 // Instead, implement timer_start
 uint32_t virtual_timer_start(uint32_t microseconds, virtual_timer_callback_t cb) {
-  return timer_start(microseconds, cb, false);
+  return 
+  //timer_start(microseconds, cb, false);
 }
 
 // You do not need to modify this function
 // Instead, implement timer_start
 uint32_t virtual_timer_start_repeated(uint32_t microseconds, virtual_timer_callback_t cb) {
-  return timer_start(microseconds, cb, true);
+  return 
+  //timer_start(microseconds, cb, true);
 }
 
 // Remove a timer by ID.

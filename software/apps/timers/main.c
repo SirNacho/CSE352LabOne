@@ -1,6 +1,4 @@
-
-
-//** Code: Hard Timers (Lab 6)
+//** Code: Hard Timers
 //** Author: Umer Huzaifa
 //** Comments: Keeping a separate app for the hardware timers and counters
 
@@ -21,21 +19,43 @@
 
 #include "buckler.h"
 
-void timer_init(uint8_t duration){
-    // fill in this function to initialize a timer of your choice
+uint32_t PRESCALER = 0;
 
-
-
+uint32_t secondsToTicks(uint8_t duration)
+{
+  uint32_t timer_frequency = 16000000 / (1 << PRESCALER);
+  uint32_t ticks = ((uint32_t)duration * timer_frequency);
+  return ticks;
 }
 
-uint32_t read_timer(){
+void timer_init(uint8_t duration)
+{
+    NRF_TIMER4->TASKS_STOP = 0x01;
+    NRF_TIMER4->TASKS_CLEAR = 0x01;
 
-    // fill in this function for reading the timer value on calling this function
+  // fill in this function to initialize a timer of your choice
+  printf("Initializing timer with duration of %ld ticks\n", secondsToTicks(duration));
+  // timer 0 is at 0x40008000
+  // CC is at 0x540
+
+  NRF_TIMER4->PRESCALER = PRESCALER;
+  NRF_TIMER4->BITMODE = 3;
+  NRF_TIMER4->MODE = 0;
+  NRF_TIMER4->CC[3] = secondsToTicks(duration); 
+
+  NRF_TIMER4->TASKS_CLEAR = 0x01;
+  NRF_TIMER4->TASKS_START = 0x01;
 }
 
+uint32_t read_timer()
+{
+    NRF_TIMER4->TASKS_CAPTURE[3] = 0x01;
+      return NRF_TIMER4->CC[3];
+  // fill in this function for reading the timer value on calling this function
+}
 
-
-int main(void) {
+int main(void)
+{
   ret_code_t error_code = NRF_SUCCESS;
 
   // initialize RTT library
@@ -45,17 +65,24 @@ int main(void) {
   printf("Board initialized!\n");
 
   // You can use the NRF GPIO library to test your timers
-  
-  uint8_t duration = 3; // or a time of your choice. 
-  timer_init(duration);  
+  nrf_gpio_pin_dir_set(BUCKLER_LED0, NRF_GPIO_PIN_DIR_OUTPUT);
+  nrf_gpio_pin_dir_set(BUCKLER_LED1, NRF_GPIO_PIN_DIR_OUTPUT);
+  nrf_gpio_pin_dir_set(BUCKLER_LED2, NRF_GPIO_PIN_DIR_OUTPUT);
 
+  uint8_t duration = 3; // or a time of your choice.
+  timer_init(duration);
 
-  nrf_delay_ms(3000);
+  nrf_delay_ms(duration * 1000);
 
-  
   // loop forever
-  while (1) {
-    printf("Timer 4 readings are: %d \n", read_timer());
-    
+  while (1)
+  {
+    uint32_t elapsed = read_timer();
+    printf("Timer 4 readings are: %ld \n", elapsed);
+    if (elapsed >= duration) {
+      break;
+    }
   }
+  NRF_TIMER4->TASKS_CLEAR = 1;
+  printf("Timer over\n");
 }
