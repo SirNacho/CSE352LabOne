@@ -10,18 +10,18 @@
 #include "virtual_timer.h"
 #include "virtual_timer_linked_list.h"
 
-uint32_t PRESCALER = 4;
-
 // This is the interrupt handler that fires on a compare event
 void TIMER4_IRQHandler(void) {
+
+  //Disabling interrupts temporarily.
   __disable_irq();
+
   // This should always be the first line of the interrupt handler!
   // It clears the event so that it doesn't happen again
   NRF_TIMER4->EVENTS_COMPARE[0] = 0;
 
   // Place your interrupt handler code here
-
-   
+  
   // Update CC[0] register from the remaining timer values
   checkTimers();
 }
@@ -39,6 +39,47 @@ void checkTimers(){
   3. Check if the timer vallue in this node is already reached. 
   In that case, call the callback function. The callback function can be called using the following command: timer_node->cbFunc();
   */
+  
+
+  node_t* list_head = list_get_first();
+
+  if (list_head == NULL) 
+  {
+    __enable_irq();
+    return;
+  }
+
+  node_t* expired = list_head;
+  
+  //execute callback function.
+  if (expired->cbFunc != NULL)
+  {
+    (*(expired->cbFunc))(); //<---call the callback.
+  }
+
+  if (expired->period != 0) 
+  {
+    expired->timer_value = read_timer() + expired->period;
+    list_remove(expired);
+    list_insert_sorted(expired);
+    node_t* new_head = list_get_first();
+    if (new_head != NULL)
+    {
+    NRF_TIMER4->CC[0] = new_head->timer_value;
+    }
+  }
+  else
+  {
+    list_remove(expired); //<---NOTE: Don't forget to remove the expired node before freeing it or the mc will crash and yell at you.
+    free(expired);
+    node_t* new_head = list_get_first();
+    if (new_head != NULL) 
+    {
+      NRF_TIMER4->CC[0] = new_head->timer_value;
+    }
+  }
+
+  __enable_irq();
 }
 
 
@@ -46,7 +87,10 @@ void checkTimers(){
 uint32_t read_timer(void) {
   // Same function as the regular timers lab from CSE 351
   // Should return the value of the internal counter for TIMER4
-  return 0;
+  
+  NRF_TIMER4->TASKS_CAPTURE[3] = 0x01;
+  return NRF_TIMER4->CC[3];
+  //return 0;
 }
 
 // Initialize TIMER4 as a free running timer
@@ -57,15 +101,25 @@ uint32_t read_timer(void) {
 // 5) Start the timer
 void virtual_timer_init(void) {
   // Place your timer initialization code here
-
-  NRF_TIMER4->PRESCALER = PRESCALER;
-  NRF_TIMER4->BITMODE = 3;
-  NRF_TIMER4->MODE = 0;
-
+  
+  //Stopping and clearing timer4.
   NRF_TIMER4->TASKS_STOP = 0x01;
   NRF_TIMER4->TASKS_CLEAR = 0x01;
 
+  //Setting up the timers values.
+  NRF_TIMER4->PRESCALER = 4; //<---- This should set the count to be at 1mhz
+  NRF_TIMER4->BITMODE = 3;
+  NRF_TIMER4->MODE = 0;
+  NRF_TIMER4->INTENSET = 1 << 16; // <---Set this intenset to COMPARE[0] interrupt by setting bit 16.
+  
+  //Setting up interrupt and priority.
+  NVIC_EnableIRQ(TIMER4_IRQn);
+  NVIC_SetPriority(TIMER4_IRQn, 0);
+  
+  //Clearing and start timer4.
+  NRF_TIMER4->TASKS_CLEAR = 0x01;
   NRF_TIMER4->TASKS_START = 0x01;
+  
 }
 
 // Start a timer. This function is called for both one-shot and repeated timers
@@ -84,22 +138,96 @@ void virtual_timer_init(void) {
 // Follow the lab manual and start with simple cases first, building complexity and
 // testing it over time.
 
+//This function was created to check if the id's are all good.
+void timer_id_check(void) 
+{
+  return 0;
+}
+
+static uint32_t timer_start(uint32_t microseconds, virtual_timer_callback_t cb, bool repeated) {
   
-  //list_print(list_head);
-  //return 0;
+  //Sets up new node.
+
+  node_t* new_node = (node_t*)malloc(sizeof(node_t));
+
+  new_node->timer_value = read_timer() + microseconds;
+  new_node->cbFunc = cb;
+
+  //Checks if the timer is periodic
+  if (repeated)
+  {
+    new_node->period = microseconds;
+  }
+  else
+  {
+    new_node->period = 0;
+  }
+  //new_node->period = 2000000;
+  new_node->next = NULL;
+
+  //insert new node to the list.
+  list_insert_sorted(new_node);
+  
+  //Checks if this is the first node, then update CC[0].
+
+  node_t* list_head = list_get_first();
+  if (list_head == new_node)
+  {
+    NRF_TIMER4->CC[0] = new_node->timer_value;
+  }
+  
+  printf("node id: %d\n", new_node->id);
+
+  //Test to see if I can setup three nodes as a test.
+  /*
+  //setting up the nodes.
+  node_t* node_One = (node_t*)malloc(sizeof(node_t));
+  node_One->timer_value = 2000000;
+  node_One->id = 1;
+  node_One->cbFunc = NULL;
+  node_One->period = 2000000;
+
+  node_t* node_Two = (node_t*)malloc(sizeof(node_t));
+  node_Two->timer_value = 5000000;
+  node_Two->id = 2;
+  node_Two->cbFunc = NULL;
+  node_Two->period = 2000000;
+
+  node_t* node_Three = (node_t*)malloc(sizeof(node_t));
+  node_Three->timer_value = 10000000;
+  node_Three->id = 3;
+  node_Three->cbFunc = NULL;
+  node_Three->period = 2000000;
+
+  //assigning what's next to each node.
+  node_One->next = node_Two;
+  node_Two->next = node_Three;
+  node_Three->next = NULL;
+  node_t* list_head = list_get_first();
+
+  //Inserting the nodes to the list.
+  list_insert_sorted(node_One);
+  list_insert_sorted(node_Two);
+  list_insert_sorted(node_Three);
+  */
+
+  //Printing the linked list nodes.
+  //printf("Node One id: %d\nNode Two id: %d\nNode Three id: %d\n", node_One->id, node_Two->id, node_Three->id);
+  //list_print();
+  //printf("The first node in the linked list is: Node %d.\n\n", list_head->id);
+  return new_node->id;
+}
 
 // You do not need to modify this function
 // Instead, implement timer_start
 uint32_t virtual_timer_start(uint32_t microseconds, virtual_timer_callback_t cb) {
-  return 
-  //timer_start(microseconds, cb, false);
+  return timer_start(microseconds, cb, false);
 }
 
 // You do not need to modify this function
 // Instead, implement timer_start
 uint32_t virtual_timer_start_repeated(uint32_t microseconds, virtual_timer_callback_t cb) {
-  return 
-  //timer_start(microseconds, cb, true);
+  return timer_start(microseconds, cb, true);
 }
 
 // Remove a timer by ID.

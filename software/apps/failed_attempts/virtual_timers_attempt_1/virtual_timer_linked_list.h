@@ -15,9 +15,10 @@ typedef struct node_t {
     // *** Additional timer fields ***
 
     // add your own variables here
+
     virtual_timer_callback_t* cbFunc;
     uint32_t period;
-    uint8_t id;
+    uint8_t ID;
 
     // *** Do not edit below this line ***
 

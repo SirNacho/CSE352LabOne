@@ -8,9 +8,13 @@ typedef void *virtual_timer_callback_t(void);//(uint32_t);
 
 void checkTimers(void);
 
+//void timer_start(uint32_t microseconds, virtual_timer_callback_t* cb, bool repeated);
+
 // Read the current value of the hardware timer counter
 // Returns the counter value
 uint32_t read_timer(void);
+
+
 
 // Initialize the timer peripheral
 void virtual_timer_init(void);
