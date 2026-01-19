@@ -1,2 +1,15 @@
 
+#Sets of directories where I have changes to them.
+software/apps/analog_accelerometer/
+software/apps/sd_accelerometer/
+software/apps/sd_card/
+software/apps/gpio_blank/
+software/apps/blink/
+software/apps/interrupts/
+software/apps/printf/
+software/apps/interrupts
+software/apps/timers
+software/apps/multi-peripheral
+software/apps/pwmBareBones
+software/apps/buckler_test
 **/build
