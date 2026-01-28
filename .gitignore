@@ -12,4 +12,5 @@ software/apps/timers
 software/apps/multi-peripheral
 software/apps/pwmBareBones
 software/apps/buckler_test
+misc/
 **/build

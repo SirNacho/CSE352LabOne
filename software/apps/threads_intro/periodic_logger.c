@@ -18,11 +18,31 @@ void* logger_thread(void* arg) {
     
     /* Implement a code that runs every LOG_INTERVAL_MS
     Print a message if it misses an interval by DELAY_THRESH */
+    sleep_ms(LOG_INTERVAL_MS);
+    
+    if (RUNTIME_SECONDS < LOG_INTERVAL_MS + DELAY_THRESH)
+    {
+      printf("logging achieved at %d seconds.\n", RUNTIME_SECONDS);
+    }
+    else 
+    {
+      printf("Deadline missed");
+    }
     return NULL;
 }
 
 int main() {
 
 	/* necessary commands for thread creation */
+    pthread_t threadID;
+    void* exitStatus;
+    int value = 42;
+    
+    for(int i = 0; i <= 20; i ++) 
+    {
+      pthread_create(&threadID, NULL, logger_thread, &value);
+      pthread_join(threadID, &exitStatus);
+    }
+
     return 0;
 }
