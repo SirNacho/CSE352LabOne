@@ -18,26 +18,49 @@ void* logger_thread(void* arg) {
     
     /* Implement a code that runs every LOG_INTERVAL_MS
     Print a message if it misses an interval by DELAY_THRESH */
+    struct timespec start, end;
+    double elapsed_ms;
+
+    clock_gettime(CLOCK_MONOTONIC, &start);
+    
     sleep_ms(LOG_INTERVAL_MS);
     
-    if (RUNTIME_SECONDS < LOG_INTERVAL_MS + DELAY_THRESH)
+    clock_gettime(CLOCK_MONOTONIC, &end);
+    
+    elapsed_ms = ((end.tv_sec - start.tv_sec) * 1000.0) + ((end.tv_nsec - start.tv_nsec) / 1000000.0);
+    
+    if (elapsed_ms < LOG_INTERVAL_MS + DELAY_THRESH)
     {
-      printf("logging achieved at %d seconds.\n", RUNTIME_SECONDS);
+      printf("logging achieved at %f seconds.\n", elapsed_ms / 1000.0);
     }
     else 
     {
-      printf("Deadline missed");
+      printf("Deadline missed\n");
     }
     return NULL;
+}
+
+void * stress_thread(void* arg) 
+{
+  volatile double funnyAnswer = 1.0;
+  
+  while (1) 
+  {
+    funnyAnswer = funnyAnswer * 67000.00000067 + 0.0000000000000000067 / 670000.00000000000000067;
+  }
+
+  return NULL;
 }
 
 int main() {
 
 	/* necessary commands for thread creation */
-    pthread_t threadID;
+    pthread_t threadID, stressID;
     void* exitStatus;
-    int value = 42;
+    int value = 67;
     
+    pthread_create(&stressID, NULL, stress_thread, NULL);
+
     for(int i = 0; i <= 20; i ++) 
     {
       pthread_create(&threadID, NULL, logger_thread, &value);
