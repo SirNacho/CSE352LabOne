@@ -90,20 +90,36 @@ int main(void) {
         current_state = OFF;
         break;
       case ON:
+        printf("ON");
         gpio_clear(BUCKLER_LED0);
         
         if (gpio_read(BUCKLER_BUTTON0))
-          {current_state = OFF;            
+          {current_state = BLINK;            
             
           }
         break;
       case OFF:
+        printf("OFF");
         gpio_set(BUCKLER_LED0);
         
         if (!gpio_read(BUCKLER_BUTTON0))
           {current_state = ON;          
           
           }
+        break;
+      case BLINK:
+        printf("BLINK");
+        while (1) {
+          gpio_set(BUCKLER_LED0);
+          nrf_delay_ms(500);
+          gpio_clear(BUCKLER_LED0);
+
+          if (!gpio_read(BUCKLER_BUTTON0))
+          {current_state = OFF;          
+          
+          }
+          break;
+        }
         break;
       default:
         current_state = OFF;

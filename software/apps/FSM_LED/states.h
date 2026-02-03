@@ -5,7 +5,8 @@
 typedef enum{
 	INIT = 0,	
 	ON   = 1,
-	OFF
+	OFF,
+	BLINK
 }state;
 
 
