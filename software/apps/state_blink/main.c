@@ -16,6 +16,7 @@
 #include "nrf_log_default_backends.h"
 #include "nrf_pwr_mgmt.h"
 #include "nrf_serial.h"
+#include "states.h"
 
 #include "buckler.h"
 
@@ -31,16 +32,32 @@ int main(void) {
   }
   APP_ERROR_CHECK(error_code);
 
+  // configure leds
+  // manually-controlled (simple) output, initially set
+  nrfx_gpiote_out_config_t out_config = NRFX_GPIOTE_CONFIG_OUT_SIMPLE(true);
+  for (int i=0; i<3; i++) {
+    error_code = nrfx_gpiote_out_init(LEDS[i], &out_config);
+    APP_ERROR_CHECK(error_code);
+  }
+
+  // configure button and switch
+  // input pin, trigger on either edge, low accuracy (allows low-power operation)
+  nrfx_gpiote_in_config_t in_config = NRFX_GPIOTE_CONFIG_IN_SENSE_TOGGLE(false);
+  in_config.pull = NRF_GPIO_PIN_NOPULL;
+  error_code = nrfx_gpiote_in_init(BUCKLER_BUTTON0, &in_config, NULL);
+  nrfx_gpiote_in_event_enable(BUCKLER_BUTTON0, true);
+
+
   led_state_t state = STATE_INIT; 
-  while (;;) {
+  while (1) {
     switch(state) {
       case STATE_INIT:
-        current_state = STATE_IDLE;
+        state = STATE_OFF;
         break;    
-      case STATE_ON:
-        break;
       case STATE_OFF:
-        break;
+        if (nrfx_gpiote_in_is_set(BUCKLER_BUTTON0)) {nrfx_gpiote_out_set(LEDS[0]);}
+      case STATE_ON:
+        if (!nrfx_gpiote_in_is_set(BUCKLER_BUTTON0)) {nrfx_gpiote_out_clear(LEDS[0]);}
     }
   return 0;
 
