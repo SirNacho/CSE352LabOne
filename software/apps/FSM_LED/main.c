@@ -72,6 +72,25 @@ int main(void) {
   // initialize the state variable
 
   current_state = INIT; 
+ 
+  // Initialize SPI for display
+
+    nrf_drv_spi_t spi_instance = NRF_DRV_SPI_INSTANCE(1);
+    nrf_drv_spi_config_t spi_config = {
+        .sck_pin = BUCKLER_LCD_SCLK,
+        .mosi_pin = BUCKLER_LCD_MOSI,
+        .miso_pin = BUCKLER_LCD_MISO,
+        .ss_pin = BUCKLER_LCD_CS,
+        .irq_priority = NRFX_SPI_DEFAULT_CONFIG_IRQ_PRIORITY,
+        .orc = 0,
+        .frequency = NRF_DRV_SPI_FREQ_4M,
+        .mode = NRF_DRV_SPI_MODE_2,
+        .bit_order = NRF_DRV_SPI_BIT_ORDER_MSB_FIRST
+    };
+  error_code = nrf_drv_spi_init(&spi_instance, &spi_config, NULL, NULL);
+  APP_ERROR_CHECK(error_code); 
+  display_init(&spi_instance);
+  printf("Display initialized\n");
   
   // loop forever, running state machine
   while (1) {
@@ -125,6 +144,9 @@ int main(void) {
         current_state = OFF;
 
     }
+      char buf[2][16];
+      snprintf(buf[0], sizeof(buf[0]), "State: %d\n", current_state);
+      display_write(buf[0], 0);
     
   }
 }
