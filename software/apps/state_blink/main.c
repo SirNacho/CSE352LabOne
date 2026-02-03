@@ -31,18 +31,32 @@ int main(void) {
   }
   APP_ERROR_CHECK(error_code);
 
+  led_state_t state = STATE_INIT; 
+  while (;;) {
+    switch(state) {
+      case STATE_INIT:
+        current_state = STATE_IDLE;
+        break;    
+      case STATE_ON:
+        break;
+      case STATE_OFF:
+        break;
+    }
+  return 0;
+
   // configure leds
   // manually-controlled (simple) output, initially set
-  nrfx_gpiote_out_config_t out_config = NRFX_GPIOTE_CONFIG_OUT_SIMPLE(true);
-  for (int i=0; i<3; i++) {
-    error_code = nrfx_gpiote_out_init(LEDS[i], &out_config);
-    APP_ERROR_CHECK(error_code);
-  }
-  // loop forever
-  while (1) {
-    for (int i=2; i>-1; i--) {
-      nrf_gpio_pin_toggle(LEDS[i]);
-      nrf_delay_ms(500);
-    }
+  // nrfx_gpiote_out_config_t out_config = NRFX_GPIOTE_CONFIG_OUT_SIMPLE(true);
+  // for (int i=0; i<3; i++) {
+  //   error_code = nrfx_gpiote_out_init(LEDS[i], &out_config);
+  //   APP_ERROR_CHECK(error_code);
+  // }
+  // // loop forever
+  // while (1) {
+  //   for (int i=2; i>-1; i--) {
+  //     nrf_gpio_pin_toggle(LEDS[i]);
+  //     nrf_delay_ms(500);
+  //   }
+
   }
 }
