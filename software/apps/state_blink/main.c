@@ -21,7 +21,7 @@
 #include "buckler.h"
 
 // LED array
-static uint8_t LEDS[3] = {BUCKLER_LED0, BUCKLER_LED1, BUCKLER_LED2};
+// static uint8_t LEDS[3] = {BUCKLER_LED0, BUCKLER_LED1, BUCKLER_LED2};
 
 int main(void) {
   ret_code_t error_code = NRF_SUCCESS;
@@ -35,30 +35,47 @@ int main(void) {
   // configure leds
   // manually-controlled (simple) output, initially set
   nrfx_gpiote_out_config_t out_config = NRFX_GPIOTE_CONFIG_OUT_SIMPLE(true);
-  for (int i=0; i<3; i++) {
-    error_code = nrfx_gpiote_out_init(LEDS[i], &out_config);
-    APP_ERROR_CHECK(error_code);
-  }
+  error_code = nrfx_gpiote_out_init(BUCKLER_LED0, &out_config);
+  APP_ERROR_CHECK(error_code);
 
   // configure button and switch
   // input pin, trigger on either edge, low accuracy (allows low-power operation)
   nrfx_gpiote_in_config_t in_config = NRFX_GPIOTE_CONFIG_IN_SENSE_TOGGLE(false);
   in_config.pull = NRF_GPIO_PIN_NOPULL;
   error_code = nrfx_gpiote_in_init(BUCKLER_BUTTON0, &in_config, NULL);
-  nrfx_gpiote_in_event_enable(BUCKLER_BUTTON0, true);
+  APP_ERROR_CHECK(error_code);
+  nrfx_gpiote_in_event_enable(BUCKLER_BUTTON0, true); 
 
 
-  led_state_t state = STATE_INIT; 
+  led_state_t state = STATE_INIT;
+  printf("Initialized...\n"); 
   while (1) {
     switch(state) {
       case STATE_INIT:
+        printf("Current State: INIT\n");  
         state = STATE_OFF;
-        break;    
+        nrf_delay_ms(500);
+        continue;
+            
       case STATE_OFF:
-        if (nrfx_gpiote_in_is_set(BUCKLER_BUTTON0)) {nrfx_gpiote_out_set(LEDS[0]);}
+        printf("Current State: OFF\n");
+        if (!nrfx_gpiote_in_is_set(BUCKLER_BUTTON0)) {
+          nrfx_gpiote_out_set(BUCKLER_LED0);
+          nrf_delay_ms(500);
+          state = STATE_ON;
+        }
+        break;
       case STATE_ON:
-        if (!nrfx_gpiote_in_is_set(BUCKLER_BUTTON0)) {nrfx_gpiote_out_clear(LEDS[0]);}
+        printf("Current State: ON");
+        if (nrfx_gpiote_in_is_set(BUCKLER_BUTTON0)) {
+          printf("Current State: ON");
+          nrfx_gpiote_out_clear(BUCKLER_LED0);
+          nrf_delay_ms(500);
+          state = STATE_OFF;
+        }
+        break loop1;
     }
+    printf("Left loop");
   return 0;
 
   // configure leds
