@@ -1,6 +1,6 @@
 /*
  * FreeRTOS Kernel <DEVELOPMENT BRANCH>
- * Copyright (C) 2021 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+ * Copyright (C) 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,8 +37,8 @@
 
 typedef QueueHandle_t SemaphoreHandle_t;
 
-#define semBINARY_SEMAPHORE_QUEUE_LENGTH    ( ( uint8_t ) 1U )
-#define semSEMAPHORE_QUEUE_ITEM_LENGTH      ( ( uint8_t ) 0U )
+#define semBINARY_SEMAPHORE_QUEUE_LENGTH    ( ( UBaseType_t ) 1U )
+#define semSEMAPHORE_QUEUE_ITEM_LENGTH      ( ( UBaseType_t ) 0U )
 #define semGIVE_BLOCK_TIME                  ( ( TickType_t ) 0U )
 
 
@@ -95,13 +95,13 @@ typedef QueueHandle_t SemaphoreHandle_t;
  */
 #if ( configSUPPORT_DYNAMIC_ALLOCATION == 1 )
     #define vSemaphoreCreateBinary( xSemaphore )                                                                                     \
-    {                                                                                                                                \
+    do {                                                                                                                             \
         ( xSemaphore ) = xQueueGenericCreate( ( UBaseType_t ) 1, semSEMAPHORE_QUEUE_ITEM_LENGTH, queueQUEUE_TYPE_BINARY_SEMAPHORE ); \
         if( ( xSemaphore ) != NULL )                                                                                                 \
         {                                                                                                                            \
             ( void ) xSemaphoreGive( ( xSemaphore ) );                                                                               \
         }                                                                                                                            \
-    }
+    } while( 0 )
 #endif
 
 /**
@@ -1193,7 +1193,8 @@ typedef QueueHandle_t SemaphoreHandle_t;
 /**
  * semphr.h
  * @code{c}
- * BaseType_t xSemaphoreGetStaticBuffer( SemaphoreHandle_t xSemaphore );
+ * BaseType_t xSemaphoreGetStaticBuffer( SemaphoreHandle_t xSemaphore,
+ *                                       StaticSemaphore_t ** ppxSemaphoreBuffer );
  * @endcode
  *
  * Retrieve pointer to a statically created binary semaphore, counting semaphore,
